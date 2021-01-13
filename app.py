@@ -1,20 +1,24 @@
-import requests, re
 import os
+import time
+from helps import get_one_page, parse_one_page, write_to_file
 
-def get_one_page(url):
-    """
-        爬取具体一页 sample: url=https://maoyan.com/board/4?offset=0
-        @param url: 要抓取页面的url
-        @return: 网页的html
-    """
+def crawl(offset):
+    url = os.getenv('URL') + '?offset=' + str(offset)
+    html = get_one_page(url)
+    for item in parse_one_page(html):
+        write_to_file(item)
 
-    headers = {
-        'User-Agent': os.getenv('USER_AGENT')
-    }
+if __name__ == '__main__':
+    # 如果已存在结果文件，清空
+    with open(os.getenv('RESULT_FILE'), 'w') as f:
+        f.truncate()
 
-    response = requests.get(url, headers=headers)
+    # 爬取
+    for i in range(10):
+        print(f'Crawling Top {i*10+1} to {(i+1)*10}.....')
+        crawl(i * 10)
 
-    if response.status_code == 200:
-        return response.text
-    else:
-        return None
+        # 防止反爬虫
+        time.sleep(1)
+
+    print("Results has been written to " + os.getenv('RESULT_FILE'))
